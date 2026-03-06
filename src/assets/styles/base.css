@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Anti-FOUC: default dark so there's no cream flash ── */
+:root { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* ── Headings: Kaio font, 3× size ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), var(--font-space-grotesk), system-ui, sans-serif;
+}
+h1 { font-size: 6rem !important; line-height: 1.1; }
+h2 { font-size: 4.5rem !important; line-height: 1.15; }
+h3 { font-size: 3.5rem !important; line-height: 1.2; }
+h4 { font-size: 3rem !important; line-height: 1.25; }
+h5 { font-size: 2.5rem !important; line-height: 1.3; }
+h6 { font-size: 2rem !important; line-height: 1.35; }

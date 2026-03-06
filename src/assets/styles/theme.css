@@ -1,0 +1,60 @@
+/* ─────────────────────────────────────────
+   DARK THEME  (Mathical — pure black)
+───────────────────────────────────────── */
+html,
+html.dark {
+  --bg:         #000000;
+  --bg-card:    #111111;
+  --bg-input:   #1a1a1a;
+  --bg-hover:   #1f1f1f;
+  --border:     #262626;
+  --border-sub: #1a1a1a;
+
+  --txt:        #ffffff;
+  --txt-muted:  #888888;
+  --txt-faint:  #3d3d3d;
+
+  --accent:     #F67ADF;
+  --accent-h:   #e855cc;
+  --accent-bg:  rgba(246,122,223,0.08);
+  --accent-bd:  rgba(246,122,223,0.25);
+
+  --lime:       #D4F24E;
+  --lime-bg:    rgba(212,242,78,0.08);
+  --orange:     #FF9A3C;
+  --orange-bg:  rgba(255,154,60,0.08);
+  --red:        #ff4d6a;
+  --red-bg:     rgba(255,77,106,0.08);
+
+  color-scheme: dark;
+}
+
+/* ─────────────────────────────────────────
+   LIGHT THEME  (warm cream)
+───────────────────────────────────────── */
+html:not(.dark) {
+  --bg:         #FAF9F6;
+  --bg-card:    #FFFFFF;
+  --bg-input:   #F0EDE6;
+  --bg-hover:   #EAE7E0;
+  --border:     #E0DDD6;
+  --border-sub: #EAE7E0;
+
+  --txt:        #0D0D0D;
+  --txt-muted:  #666666;
+  --txt-faint:  #c0bbb3;
+
+  --accent:     #D63BBF;
+  --accent-h:   #b82da3;
+  --accent-bg:  rgba(214,59,191,0.07);
+  --accent-bd:  rgba(214,59,191,0.2);
+
+  --lime:       #5d8700;
+  --lime-bg:    rgba(93,135,0,0.08);
+  --orange:     #c96f00;
+  --orange-bg:  rgba(201,111,0,0.08);
+  --red:        #cc2233;
+  --red-bg:     rgba(204,34,51,0.08);
+
+  color-scheme: light;
+}

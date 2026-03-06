@@ -1,0 +1,19 @@
+/* ── Semantic utility classes ── */
+.bg-theme       { background-color: var(--bg); }
+.bg-card        { background-color: var(--bg-card); }
+.bg-input       { background-color: var(--bg-input); }
+.border-theme   { border-color: var(--border); }
+.border-sub     { border-color: var(--border-sub); }
+.text-theme     { color: var(--txt); }
+.text-muted     { color: var(--txt-muted); }
+.text-faint     { color: var(--txt-faint); }
+.text-accent    { color: var(--accent); }
+.bg-accent      { background-color: var(--accent); }
+.bg-accent-soft { background-color: var(--accent-bg); }
+.border-accent  { border-color: var(--accent-bd); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar              { width:6px; height:6px; }
+::-webkit-scrollbar-track        { background:transparent; }
+::-webkit-scrollbar-thumb        { background:var(--border); border-radius:99px; }
+::-webkit-scrollbar-thumb:hover  { background:var(--txt-muted); }
