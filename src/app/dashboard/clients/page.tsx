@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, X, Save, Loader2 } from "lucide-react";
 import { api, type Client } from "@/lib/api";
 
@@ -173,6 +175,16 @@ function ClientForm({
 }
 
 export default function ClientsPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (session && session.user.role !== "admin") {
+      router.replace("/dashboard");
+    }
+  }, [session, router]);
+
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

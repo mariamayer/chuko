@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { ChevronRight, Filter, RefreshCw } from "lucide-react";
 import { api, type AgentRun, type AgentRunDetail } from "@/lib/api";
 
@@ -81,6 +82,9 @@ function RunDrawer({ run, onClose }: { run: AgentRunDetail; onClose: () => void 
 }
 
 export default function HistoryPage() {
+  const { data: session } = useSession();
+  const clientId = session?.user?.clientId; // undefined for admin = all clients
+
   const [runs, setRuns] = useState<AgentRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -91,7 +95,7 @@ export default function HistoryPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await api.getRuns(undefined, agentFilter || undefined);
+      const res = await api.getRuns(clientId, agentFilter || undefined);
       setRuns(res.runs);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -101,9 +105,10 @@ export default function HistoryPage() {
   }
 
   useEffect(() => {
+    if (!session) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agentFilter]);
+  }, [agentFilter, clientId, session]);
 
   async function openDetail(runId: string) {
     try {

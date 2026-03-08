@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import localFont from "next/font/local";
+import Providers from "@/components/Providers";
 import { ThemeProvider } from "@/lib/theme";
 import "@/assets/styles/globals.css";
 
@@ -41,7 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${spaceGrotesk.variable} font-sans bg-theme text-theme antialiased transition-colors duration-200`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <Providers>
+          <ThemeProvider>{children}</ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

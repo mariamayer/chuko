@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { BarChart2, Search, Megaphone, Mail, RefreshCw, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -100,10 +101,18 @@ function AgentCard({
 }
 
 export default function AgentsPage() {
+  const { data: session } = useSession();
+  const clientId = session?.user?.clientId ?? "default";
+  const enabledModules = session?.user?.enabledModules ?? [];
+  const isAdmin = session?.user?.role === "admin";
+
+  const canUse = (module: string) => isAdmin || enabledModules.includes(module);
+
   const [handle, setHandle] = useState("");
 
-  const agents = [
+  const allAgents = [
     {
+      module: "performance_digest",
       title: "Weekly Performance Digest",
       description: "Analyses your estimate pipeline and emails a plain-English summary with AI recommendations.",
       icon: BarChart2,
@@ -111,11 +120,12 @@ export default function AgentsPage() {
         {
           label: "Send digest email",
           icon: Mail,
-          run: () => api.runDigest(),
+          run: () => api.runDigest(clientId),
         },
       ],
     },
     {
+      module: "seo_brief",
       title: "SEO Content Brief",
       description: "Generates keyword targets, meta tags, H1 options, content sections and FAQs for each product.",
       icon: Search,
@@ -123,11 +133,12 @@ export default function AgentsPage() {
         {
           label: "Generate briefs for all products",
           icon: RefreshCw,
-          run: () => api.generateAllSeoBriefs(),
+          run: () => api.generateAllSeoBriefs(clientId),
         },
       ],
     },
     {
+      module: "ad_copy",
       title: "Ad Copy Refresh",
       description: "Creates 3 Meta + 2 Google ad variations per product using demand data from your estimate history.",
       icon: Megaphone,
@@ -135,11 +146,13 @@ export default function AgentsPage() {
         {
           label: "Refresh copy for all products",
           icon: RefreshCw,
-          run: () => api.refreshAllAdCopy(),
+          run: () => api.refreshAllAdCopy(clientId),
         },
       ],
     },
   ];
+
+  const agents = allAgents.filter((a) => canUse(a.module));
 
   return (
     <div className="p-8">
@@ -164,16 +177,20 @@ export default function AgentsPage() {
         </div>
         {handle && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <SingleProductButton
-              label="SEO Brief"
-              run={() => api.generateSeoBrief(handle)}
-              icon={Search}
-            />
-            <SingleProductButton
-              label="Ad Copy"
-              run={() => api.generateAdCopy(handle)}
-              icon={Megaphone}
-            />
+            {canUse("seo_brief") && (
+              <SingleProductButton
+                label="SEO Brief"
+                run={() => api.generateSeoBrief(handle, clientId)}
+                icon={Search}
+              />
+            )}
+            {canUse("ad_copy") && (
+              <SingleProductButton
+                label="Ad Copy"
+                run={() => api.generateAdCopy(handle, "", clientId)}
+                icon={Megaphone}
+              />
+            )}
           </div>
         )}
       </div>

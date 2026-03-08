@@ -2,20 +2,80 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "@/lib/theme";
-import { LayoutDashboard, Bot, History, Users, LogOut, Sun, Moon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Bot,
+  History,
+  Users,
+  BookOpen,
+  Tag,
+  FileText,
+  LogOut,
+  Sun,
+  Moon,
+} from "lucide-react";
 
-const nav = [
-  { href: "/dashboard",         label: "Overview",    icon: LayoutDashboard },
-  { href: "/dashboard/agents",  label: "Agents",      icon: Bot             },
-  { href: "/dashboard/history", label: "Run History", icon: History         },
-  { href: "/dashboard/clients", label: "Clients",     icon: Users           },
-];
+const AGENT_MODULES = ["performance_digest", "seo_brief", "ad_copy"];
 
 export default function Sidebar() {
   const path = usePathname();
   const { theme, toggle } = useTheme();
+  const { data: session } = useSession();
+
+  const role = session?.user?.role ?? "admin";
+  const enabledModules = session?.user?.enabledModules ?? [];
+  const clientName = session?.user?.name ?? "merch7am";
+
+  const hasAgents =
+    role === "admin" ||
+    AGENT_MODULES.some((m) => enabledModules.includes(m));
+
+  const nav = [
+    {
+      href: "/dashboard",
+      label: "Overview",
+      icon: LayoutDashboard,
+      show: true,
+    },
+    {
+      href: "/dashboard/agents",
+      label: "Agents",
+      icon: Bot,
+      show: hasAgents,
+    },
+    {
+      href: "/dashboard/knowledge",
+      label: "Knowledge Base",
+      icon: BookOpen,
+      show: role === "admin" || enabledModules.includes("chat"),
+    },
+    {
+      href: "/dashboard/pricing",
+      label: "Pricing",
+      icon: Tag,
+      show: role === "admin" || enabledModules.includes("price_estimator"),
+    },
+    {
+      href: "/dashboard/estimates",
+      label: "Estimates",
+      icon: FileText,
+      show: role === "admin" || enabledModules.includes("price_estimator"),
+    },
+    {
+      href: "/dashboard/history",
+      label: "Run History",
+      icon: History,
+      show: true,
+    },
+    {
+      href: "/dashboard/clients",
+      label: "Clients",
+      icon: Users,
+      show: role === "admin",
+    },
+  ].filter((item) => item.show);
 
   return (
     <aside className="w-56 min-h-screen flex flex-col border-r border-theme bg-card">
@@ -29,8 +89,12 @@ export default function Sidebar() {
             ✦
           </div>
           <div>
-            <p className="font-bold  tracking-tight text-theme leading-none">merch7am</p>
-            <p className="text-[10px] mt-0.5 uppercase tracking-widest text-faint">Agents</p>
+            <p className="font-bold tracking-tight text-theme leading-none">
+              {role === "client" ? clientName : "merch7am"}
+            </p>
+            <p className="text-[10px] mt-0.5 uppercase tracking-widest text-faint">
+              {role === "admin" ? "Admin" : "Dashboard"}
+            </p>
           </div>
         </div>
       </div>
@@ -38,12 +102,15 @@ export default function Sidebar() {
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {nav.map(({ href, label, icon: Icon }) => {
-          const active = href === "/dashboard" ? path === "/dashboard" : path.startsWith(href);
+          const active =
+            href === "/dashboard"
+              ? path === "/dashboard"
+              : path.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl  font-medium transition-all duration-150 border ${
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-150 border ${
                 active
                   ? "bg-accent-soft border-accent"
                   : "border-transparent hover:bg-input"
@@ -74,14 +141,14 @@ export default function Sidebar() {
       <div className="px-3 pb-5 pt-3 border-t border-theme space-y-0.5">
         <button
           onClick={toggle}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl  font-medium border border-transparent hover:bg-input transition-all duration-150 text-muted"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium border border-transparent hover:bg-input transition-all duration-150 text-muted"
         >
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
         </button>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl  font-medium border border-transparent hover:bg-input transition-all duration-150 text-muted"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium border border-transparent hover:bg-input transition-all duration-150 text-muted"
         >
           <LogOut size={15} />
           <span>Sign out</span>

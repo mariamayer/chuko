@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   BarChart,
   Bar,
@@ -70,6 +71,9 @@ function TrendBadge({ trend }: { trend: string }) {
 }
 
 export default function OverviewPage() {
+  const { data: session } = useSession();
+  const clientId = session?.user?.clientId ?? "default";
+
   const [digest, setDigest] = useState<Digest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,20 +81,20 @@ export default function OverviewPage() {
   const [aiError, setAiError] = useState("");
 
   useEffect(() => {
-    // Load metrics without triggering an OpenAI call
+    if (!session) return;
     api
-      .getDigest(4, "default", true)
+      .getDigest(4, clientId, true)
       .then((r) => setDigest(r.digest))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [clientId, session]);
 
   async function generateAiSummary() {
     if (!digest) return;
     setAiLoading(true);
     setAiError("");
     try {
-      const r = await api.getDigest(digest.period_weeks, "default", false);
+      const r = await api.getDigest(digest.period_weeks, clientId, false);
       setDigest(r.digest);
     } catch (e: unknown) {
       setAiError(e instanceof Error ? e.message : "Failed to generate summary");

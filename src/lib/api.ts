@@ -89,6 +89,58 @@ export interface Digest {
   generated_at: string;
 }
 
+export interface EstimateSummary {
+  estimate_id: string;
+  created_at: string;
+  client_id: string;
+  client_name: string;
+  client_email: string;
+  client_company: string;
+  estimate: number;
+  currency: string;
+  quantity: number | null;
+  product_type: string;
+  product_variant: string;
+  technique: string;
+  logo_size: string;
+}
+
+export interface EstimateBreakdown {
+  base_price_per_unit_cents: number;
+  logo_size: string;
+  logo_multiplier: number;
+  product_type: string;
+  product_multiplier: number;
+  product_variant: string;
+  variant_multiplier: number;
+  technique: string;
+  technique_multiplier: number;
+  color_count: number;
+  color_surcharge_cents: number;
+  double_sided: boolean;
+  double_sided_surcharge_cents: number;
+  quantity_multiplier: number;
+  unit_price_cents: number;
+  quantity: number;
+  total_cents: number;
+  size: string | null;
+  color: string | null;
+}
+
+export interface EstimateDetail {
+  estimate_id: string;
+  created_at: string;
+  client_id: string;
+  client_name: string;
+  client_email: string;
+  client_company: string;
+  estimate: number;
+  total_cents: number;
+  currency: string;
+  breakdown: EstimateBreakdown;
+  meta: Record<string, unknown>;
+}
+
 export interface AgentRun {
   run_id: string;
   client_id: string;
@@ -99,6 +151,26 @@ export interface AgentRun {
 
 export interface AgentRunDetail extends AgentRun {
   result: Record<string, unknown>;
+}
+
+export interface PricingRules {
+  base_price_cents: number;
+  per_color_surcharge_cents: number;
+  double_sided_surcharge_cents: number;
+  logo_size_multipliers: Record<string, number>;
+  quantity_tiers: Record<string, number>;
+  product_type_multipliers: Record<string, number>;
+  product_variant_multipliers: Record<string, number>;
+  technique_multipliers: Record<string, number>;
+  technique_color_logic: Record<string, string>;
+}
+
+export interface KBEntry {
+  id: string;
+  topic: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Client {
@@ -164,6 +236,36 @@ export const api = {
 
   getRun: (runId: string) =>
     get<{ ok: boolean; run: AgentRunDetail }>(`/api/agent-runs/${runId}`),
+
+  // Estimates
+  getEstimates: (clientId?: string, limit = 100) =>
+    get<{ ok: boolean; count: number; estimates: EstimateSummary[] }>("/api/estimates", {
+      ...(clientId ? { client_id: clientId } : {}),
+      limit,
+    }),
+
+  getEstimate: (estimateId: string) =>
+    get<{ ok: boolean; estimate: EstimateDetail }>(`/api/estimates/${estimateId}`),
+
+  // Pricing Rules
+  getPricingRules: (clientId = "default") =>
+    get<{ ok: boolean; rules: PricingRules }>("/api/pricing-rules", { client_id: clientId }),
+
+  savePricingRules: (clientId = "default", rules: PricingRules) =>
+    put<{ ok: boolean; rules: PricingRules }>(`/api/pricing-rules?client_id=${clientId}`, rules),
+
+  // Knowledge Base
+  getKB: (clientId = "default") =>
+    get<{ ok: boolean; entries: KBEntry[] }>("/api/knowledge", { client_id: clientId }),
+
+  createKBEntry: (clientId = "default", topic: string, content: string) =>
+    post<{ ok: boolean; entry: KBEntry }>("/api/knowledge", { topic, content }, { client_id: clientId }),
+
+  updateKBEntry: (clientId = "default", entryId: string, topic: string, content: string) =>
+    put<{ ok: boolean; entry: KBEntry }>(`/api/knowledge/${entryId}?client_id=${clientId}`, { topic, content }),
+
+  deleteKBEntry: (clientId = "default", entryId: string) =>
+    del<{ ok: boolean }>(`/api/knowledge/${entryId}?client_id=${clientId}`),
 
   // Clients
   getClients: () => get<{ ok: boolean; clients: Client[] }>("/api/clients"),
