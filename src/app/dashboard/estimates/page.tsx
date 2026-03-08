@@ -39,7 +39,7 @@ function Badge({ label }: { label: string }) {
   );
 }
 
-function BreakdownRow({ label, value }: { label: string; value: React.ReactNode }) {
+function BreakdownRow({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--border)" }}>
       <span className="text-xs text-muted">{label}</span>
