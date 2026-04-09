@@ -12,6 +12,25 @@ const INPUT = "w-full px-3 py-2.5 rounded-xl bg-input border border-theme text-t
 function cents(v: number) { return (v / 100).toFixed(2); }
 function fromEur(s: string) { return Math.round(parseFloat(s) * 100) || 0; }
 
+/** Backend may omit nested maps; merge so the form never reads undefined[…]. */
+function normalizePricingRules(raw: PricingRules): PricingRules {
+  return {
+    ...raw,
+    logo_size_multipliers: {
+      small: 1,
+      medium: 1,
+      large: 1,
+      full: 1,
+      ...(raw.logo_size_multipliers ?? {}),
+    },
+    quantity_tiers: raw.quantity_tiers ?? {},
+    product_type_multipliers: raw.product_type_multipliers ?? {},
+    product_variant_multipliers: raw.product_variant_multipliers ?? {},
+    technique_multipliers: raw.technique_multipliers ?? {},
+    technique_color_logic: raw.technique_color_logic ?? {},
+  };
+}
+
 function NumberInput({
   label, value, onChange, prefix = "€", step = "0.01",
 }: {
@@ -186,7 +205,7 @@ export default function PricingPage() {
     setLoading(true);
     try {
       const res = await api.getPricingRules(clientId);
-      setRules(res.rules);
+      setRules(normalizePricingRules(res.rules));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -202,7 +221,7 @@ export default function PricingPage() {
     setError("");
     try {
       const res = await api.savePricingRules(clientId, rules);
-      setRules(res.rules);
+      setRules(normalizePricingRules(res.rules));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (e: unknown) {
@@ -219,14 +238,15 @@ export default function PricingPage() {
   function patchDict(field: keyof PricingRules, key: string, val: number | string) {
     setRules((r) => {
       if (!r) return r;
-      return { ...r, [field]: { ...(r[field] as Record<string, unknown>), [key]: val } };
+      const prev = (r[field] as Record<string, unknown> | undefined) ?? {};
+      return { ...r, [field]: { ...prev, [key]: val } };
     });
   }
 
   function removeFromDict(field: keyof PricingRules, key: string) {
     setRules((r) => {
       if (!r) return r;
-      const next = { ...(r[field] as Record<string, unknown>) };
+      const next = { ...((r[field] as Record<string, unknown> | undefined) ?? {}) };
       delete next[key];
       return { ...r, [field]: next };
     });
@@ -234,8 +254,10 @@ export default function PricingPage() {
 
   function addToDict(field: keyof PricingRules, key: string, defaultVal: number | string) {
     setRules((r) => {
-      if (!r || (r[field] as Record<string, unknown>)[key] !== undefined) return r;
-      return { ...r, [field]: { ...(r[field] as Record<string, unknown>), [key]: defaultVal } };
+      if (!r) return r;
+      const prev = (r[field] as Record<string, unknown> | undefined) ?? {};
+      if (prev[key] !== undefined) return r;
+      return { ...r, [field]: { ...prev, [key]: defaultVal } };
     });
   }
 
@@ -322,7 +344,7 @@ export default function PricingPage() {
                 <label className={LABEL}>{s}</label>
                 <input
                   type="number" min="0" step="0.05"
-                  value={rules.logo_size_multipliers[s] ?? 1}
+                  value={rules.logo_size_multipliers?.[s] ?? 1}
                   onChange={(e) => patchDict("logo_size_multipliers", s, parseFloat(e.target.value) || 0)}
                   className={INPUT}
                   onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-bd)")}
@@ -344,7 +366,7 @@ export default function PricingPage() {
           <MultiplierGrid
             title="Product → multiplier"
             hint="1.0 = same as base price. Add new product types as needed."
-            data={rules.product_type_multipliers}
+            data={rules.product_type_multipliers ?? {}}
             onChange={(k, v) => patchDict("product_type_multipliers", k, v)}
             onAdd={(k) => addToDict("product_type_multipliers", k, 1.0)}
             onRemove={(k) => removeFromDict("product_type_multipliers", k)}
@@ -377,7 +399,7 @@ export default function PricingPage() {
             <MultiplierGrid
               title="Technique → multiplier"
               hint="dtg = digital, dtf = direct to film, serigrafia = screen print, bordado = embroidery, grabado = engraving"
-              data={rules.technique_multipliers}
+              data={rules.technique_multipliers ?? {}}
               onChange={(k, v) => patchDict("technique_multipliers", k, v)}
               onAdd={(k) => addToDict("technique_multipliers", k, 1.0)}
               onRemove={(k) => removeFromDict("technique_multipliers", k)}
@@ -389,7 +411,7 @@ export default function PricingPage() {
                 <code className="text-xs">charge_per_color</code> adds the color surcharge. <code className="text-xs">ignore_colors</code> skips it (DTG doesn't charge per color).
               </p>
               <div className="space-y-2">
-                {Object.entries(rules.technique_color_logic).map(([tech, logic]) => (
+                {Object.entries(rules.technique_color_logic ?? {}).map(([tech, logic]) => (
                   <div key={tech} className="flex items-center gap-2">
                     <span className="w-28 text-sm text-muted font-mono shrink-0">{tech}</span>
                     <select
@@ -415,7 +437,7 @@ export default function PricingPage() {
         <div>
           <h2 className={SECTION}>Quantity discount tiers</h2>
           <TierGrid
-            data={rules.quantity_tiers}
+            data={rules.quantity_tiers ?? {}}
             onChange={(k, v) => patchDict("quantity_tiers", k, v)}
             onAdd={(k) => addToDict("quantity_tiers", k, 1.0)}
             onRemove={(k) => removeFromDict("quantity_tiers", k)}

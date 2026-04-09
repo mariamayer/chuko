@@ -15,6 +15,15 @@ function qs(params: Record<string, string | number | undefined>) {
   return s ? `?${s}` : "";
 }
 
+/**
+ * Same-origin URL for estimate design images (proxied by Route Handler so the token is
+ * applied server-side and binary responses are not broken by the /backend rewrite chain).
+ */
+export function estimateDesignImageUrl(estimateId: string, side: "front" | "back"): string {
+  const id = encodeURIComponent(estimateId);
+  return `/api/estimate-design/${id}/${side}`;
+}
+
 async function get<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}${qs({ token: TOKEN, ...params })}`, {
     cache: "no-store",
@@ -89,6 +98,18 @@ export interface Digest {
   generated_at: string;
 }
 
+/** Flags from disk after saving storefront design uploads. */
+export interface EstimateDesignImages {
+  front?: boolean;
+  back?: boolean;
+}
+
+/** Optional relative paths from the API, e.g. /api/estimates/EST-…/design/front */
+export interface EstimateDesignImagePaths {
+  front?: string;
+  back?: string;
+}
+
 export interface EstimateSummary {
   estimate_id: string;
   created_at: string;
@@ -96,35 +117,48 @@ export interface EstimateSummary {
   client_name: string;
   client_email: string;
   client_company: string;
-  estimate: number;
+  /** Priced amount or a label such as `"consultar"` for quote requests. */
+  estimate: number | string;
   currency: string;
   quantity: number | null;
-  product_type: string;
-  product_variant: string;
-  technique: string;
-  logo_size: string;
+  product_type?: string;
+  product_variant?: string;
+  technique?: string;
+  logo_size?: string;
+  design_images?: EstimateDesignImages;
 }
 
+/** Priced pipeline (cents) and/or alternate storefront / “consultar” fields. */
 export interface EstimateBreakdown {
-  base_price_per_unit_cents: number;
-  logo_size: string;
-  logo_multiplier: number;
-  product_type: string;
-  product_multiplier: number;
-  product_variant: string;
-  variant_multiplier: number;
-  technique: string;
-  technique_multiplier: number;
-  color_count: number;
-  color_surcharge_cents: number;
-  double_sided: boolean;
-  double_sided_surcharge_cents: number;
-  quantity_multiplier: number;
-  unit_price_cents: number;
-  quantity: number;
-  total_cents: number;
-  size: string | null;
-  color: string | null;
+  base_price_per_unit_cents?: number;
+  logo_size?: string;
+  logo_multiplier?: number;
+  product_type?: string;
+  product_multiplier?: number;
+  product_variant?: string;
+  variant_multiplier?: number;
+  technique?: string;
+  technique_multiplier?: number;
+  color_count?: number;
+  color_surcharge_cents?: number;
+  double_sided?: boolean;
+  double_sided_surcharge_cents?: number;
+  quantity_multiplier?: number;
+  unit_price_cents?: number;
+  quantity?: number;
+  total_cents?: number;
+  size?: string | null;
+  color?: string | null;
+  /** Alternate shape: product title, etc. */
+  product?: string;
+  variant?: string | null;
+  logo_placement?: string | null;
+  colors?: string;
+  quantity_tier?: string;
+  base_price_per_unit?: number | null;
+  personalization_price_per_unit?: number | null;
+  unit_price?: string | number | null;
+  total_price?: string | number | null;
 }
 
 export interface EstimateDetail {
@@ -134,11 +168,20 @@ export interface EstimateDetail {
   client_name: string;
   client_email: string;
   client_company: string;
-  estimate: number;
-  total_cents: number;
+  estimate: number | string;
+  total_cents?: number | null;
+  total?: number | null;
   currency: string;
+  /** When true, totals may be labels (e.g. “consultar”) instead of numbers. */
+  consultar?: boolean;
   breakdown: EstimateBreakdown;
   meta: Record<string, unknown>;
+  design_images?: EstimateDesignImages;
+  design_image_paths?: EstimateDesignImagePaths;
+  analysis?: {
+    front?: { logo_size?: string; color_count?: number; notes?: string };
+    back?: { logo_size?: string; color_count?: number; notes?: string };
+  };
 }
 
 export interface AgentRun {

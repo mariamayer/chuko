@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { RefreshCw, Search, X } from "lucide-react";
-import { api, type EstimateSummary, type EstimateDetail } from "@/lib/api";
+import {
+  api,
+  estimateDesignImageUrl,
+  type EstimateSummary,
+  type EstimateDetail,
+  type EstimateBreakdown,
+} from "@/lib/api";
 
 function formatDate(iso: string) {
   if (!iso) return "—";
@@ -27,6 +33,33 @@ function formatCurrency(amount: number | null | undefined, currency = "USD") {
   }).format(amount);
 }
 
+/** List/detail total: supports priced amounts or labels like `"consultar"`. */
+function formatEstimateDisplay(estimate: number | string | null | undefined, currency: string) {
+  if (estimate == null) return "—";
+  if (typeof estimate === "string") return estimate;
+  return formatCurrency(estimate, currency);
+}
+
+function displayUnitOrTotal(v: string | number | null | undefined, currency: string) {
+  if (v == null) return "—";
+  if (typeof v === "string") return v;
+  return formatCurrency(v, currency);
+}
+
+function hasLegacyPricedBreakdown(bd: EstimateBreakdown | undefined) {
+  if (!bd) return false;
+  return (
+    typeof bd.unit_price_cents === "number" ||
+    typeof bd.base_price_per_unit_cents === "number"
+  );
+}
+
+/** Backend may omit multiplier fields; avoid calling .toFixed on undefined. */
+function fmtMultiplier(v: number | null | undefined, fallback = 1) {
+  const n = v ?? fallback;
+  return (Number.isFinite(n) ? n : fallback).toFixed(2);
+}
+
 function Badge({ label }: { label: string }) {
   if (!label) return null;
   return (
@@ -45,6 +78,36 @@ function BreakdownRow({ label, value }: { label: React.ReactNode; value: React.R
       <span className="text-xs text-muted">{label}</span>
       <span className="text-xs text-theme font-medium">{value}</span>
     </div>
+  );
+}
+
+function DesignImage({
+  estimateId,
+  side,
+  className = "",
+}: {
+  estimateId: string;
+  side: "front" | "back";
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        className={`flex items-center justify-center rounded-lg border border-dashed border-theme text-faint text-xs ${className}`}
+      >
+        Unavailable
+      </div>
+    );
+  }
+  return (
+    <img
+      src={estimateDesignImageUrl(estimateId, side)}
+      alt={side === "front" ? "Front design" : "Back design"}
+      loading="lazy"
+      className={className}
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -87,6 +150,35 @@ function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: 
         {detail && (
           <div className="p-6 space-y-6">
 
+            {/* Design previews from Shopify uploads */}
+            {(detail.design_images?.front || detail.design_images?.back) && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Design previews</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {detail.design_images?.front && (
+                    <div>
+                      <p className="text-faint text-[10px] uppercase tracking-wider mb-1.5">Front</p>
+                      <DesignImage
+                        estimateId={estimateId}
+                        side="front"
+                        className="w-full max-h-56 rounded-xl object-contain bg-input border border-theme"
+                      />
+                    </div>
+                  )}
+                  {detail.design_images?.back && (
+                    <div>
+                      <p className="text-faint text-[10px] uppercase tracking-wider mb-1.5">Back</p>
+                      <DesignImage
+                        estimateId={estimateId}
+                        side="back"
+                        className="w-full max-h-56 rounded-xl object-contain bg-input border border-theme"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Customer info */}
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Customer</p>
@@ -114,22 +206,32 @@ function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: 
             >
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--accent)" }}>
-                  Total estimate
+                  {detail.consultar ? "Quote status" : "Total estimate"}
                 </p>
                 <p className="text-2xl font-black mt-0.5" style={{ color: "var(--accent)" }}>
-                  {formatCurrency(detail.estimate, detail.currency)}
+                  {formatEstimateDisplay(detail.estimate, detail.currency)}
                 </p>
+                {detail.consultar && (
+                  <p className="text-xs mt-1.5" style={{ color: "var(--accent)" }}>
+                    Customer requested a custom quote (not auto-priced).
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted">Qty: <span className="text-theme font-semibold">{bd?.quantity ?? "—"}</span></p>
                 <p className="text-xs text-muted mt-1">
-                  Unit: <span className="text-theme font-semibold">{formatCurrency((bd?.unit_price_cents ?? 0) / 100, detail.currency)}</span>
+                  Unit:{" "}
+                  <span className="text-theme font-semibold">
+                    {hasLegacyPricedBreakdown(bd)
+                      ? formatCurrency((bd?.unit_price_cents ?? 0) / 100, detail.currency)
+                      : displayUnitOrTotal(bd?.unit_price ?? null, detail.currency)}
+                  </span>
                 </p>
               </div>
             </div>
 
-            {/* Product info */}
-            {bd && (
+            {/* Product: priced pipeline (multipliers, cents) */}
+            {bd && hasLegacyPricedBreakdown(bd) && (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Product</p>
                 <div className="bg-input rounded-xl p-4">
@@ -140,31 +242,105 @@ function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: 
                     {bd.logo_size && <Badge label={`logo: ${bd.logo_size}`} />}
                   </div>
                   <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-                    <BreakdownRow label="Base price / unit" value={formatCurrency(bd.base_price_per_unit_cents / 100, detail.currency)} />
-                    <BreakdownRow label="Product multiplier" value={`×${bd.product_multiplier.toFixed(2)}`} />
-                    {bd.variant_multiplier !== 1 && (
-                      <BreakdownRow label="Variant multiplier" value={`×${bd.variant_multiplier.toFixed(2)}`} />
+                    <BreakdownRow
+                      label="Base price / unit"
+                      value={formatCurrency((bd.base_price_per_unit_cents ?? 0) / 100, detail.currency)}
+                    />
+                    <BreakdownRow label="Product multiplier" value={`×${fmtMultiplier(bd.product_multiplier)}`} />
+                    {(bd.variant_multiplier ?? 1) !== 1 && (
+                      <BreakdownRow label="Variant multiplier" value={`×${fmtMultiplier(bd.variant_multiplier)}`} />
                     )}
-                    <BreakdownRow label="Technique multiplier" value={`×${bd.technique_multiplier.toFixed(2)}`} />
-                    <BreakdownRow label="Logo multiplier" value={`×${bd.logo_multiplier.toFixed(2)}`} />
-                    {bd.color_surcharge_cents > 0 && (
+                    <BreakdownRow label="Technique multiplier" value={`×${fmtMultiplier(bd.technique_multiplier)}`} />
+                    <BreakdownRow label="Logo multiplier" value={`×${fmtMultiplier(bd.logo_multiplier)}`} />
+                    {(bd.color_surcharge_cents ?? 0) > 0 && (
                       <BreakdownRow
-                        label={`Color surcharge (${bd.color_count} colors)`}
-                        value={`+${formatCurrency(bd.color_surcharge_cents / 100, detail.currency)}`}
+                        label={`Color surcharge (${bd.color_count ?? 0} colors)`}
+                        value={`+${formatCurrency((bd.color_surcharge_cents ?? 0) / 100, detail.currency)}`}
                       />
                     )}
                     {bd.double_sided && (
                       <BreakdownRow
                         label="Double-sided fee"
-                        value={`+${formatCurrency(bd.double_sided_surcharge_cents / 100, detail.currency)}`}
+                        value={`+${formatCurrency((bd.double_sided_surcharge_cents ?? 0) / 100, detail.currency)}`}
                       />
                     )}
-                    <BreakdownRow label="Quantity discount" value={`×${bd.quantity_multiplier.toFixed(2)}`} />
+                    <BreakdownRow label="Quantity discount" value={`×${fmtMultiplier(bd.quantity_multiplier)}`} />
                     <BreakdownRow
                       label={<span className="font-semibold text-theme">Unit price (after discount)</span>}
-                      value={<span className="font-bold text-theme">{formatCurrency(bd.unit_price_cents / 100, detail.currency)}</span>}
+                      value={
+                        <span className="font-bold text-theme">
+                          {formatCurrency((bd.unit_price_cents ?? 0) / 100, detail.currency)}
+                        </span>
+                      }
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Product: storefront / consultar shape */}
+            {bd && !hasLegacyPricedBreakdown(bd) && (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Request details</p>
+                <div className="bg-input rounded-xl p-4 space-y-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Boolean((bd.product_type || bd.product || "").toString().trim()) && (
+                      <Badge label={(bd.product_type || bd.product || "").toString().trim()} />
+                    )}
+                    {(bd.product_variant || bd.variant) != null &&
+                      String(bd.product_variant ?? bd.variant).trim() !== "" && (
+                        <Badge label={String(bd.product_variant ?? bd.variant)} />
+                      )}
+                    {bd.technique ? <Badge label={bd.technique} /> : null}
+                    {bd.colors ? <Badge label={bd.colors} /> : null}
+                    {bd.quantity_tier ? <Badge label={bd.quantity_tier} /> : null}
+                    {detail.analysis?.front?.logo_size ? (
+                      <Badge label={`logo: ${detail.analysis.front.logo_size}`} />
+                    ) : null}
+                  </div>
+                  <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                    <BreakdownRow label="Unit price" value={displayUnitOrTotal(bd.unit_price ?? null, detail.currency)} />
+                    <BreakdownRow label="Line total" value={displayUnitOrTotal(bd.total_price ?? null, detail.currency)} />
+                    {bd.base_price_per_unit != null && (
+                      <BreakdownRow
+                        label="Base price / unit"
+                        value={formatCurrency(bd.base_price_per_unit, detail.currency)}
+                      />
+                    )}
+                    {bd.personalization_price_per_unit != null && (
+                      <BreakdownRow
+                        label="Personalization / unit"
+                        value={formatCurrency(bd.personalization_price_per_unit, detail.currency)}
+                      />
+                    )}
+                  </div>
+                  {detail.analysis?.front && (
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-2">Analysis (front)</p>
+                      <div className="text-xs text-muted space-y-1">
+                        {detail.analysis.front.logo_size && (
+                          <p>Logo size: <span className="text-theme">{detail.analysis.front.logo_size}</span></p>
+                        )}
+                        {detail.analysis.front.color_count != null && (
+                          <p>Colors detected: <span className="text-theme">{detail.analysis.front.color_count}</span></p>
+                        )}
+                        {detail.analysis.front.notes && detail.analysis.front.notes !== "none" && (
+                          <p>Notes: <span className="text-theme">{detail.analysis.front.notes}</span></p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {(() => {
+                    const m = detail.meta as { product_id?: string | number; variant_id?: string | number };
+                    if (m.product_id == null && m.variant_id == null) return null;
+                    const parts = [
+                      m.product_id != null ? `product ${m.product_id}` : "",
+                      m.variant_id != null ? `variant ${m.variant_id}` : "",
+                    ].filter(Boolean);
+                    return (
+                      <p className="text-faint text-[10px] font-mono pt-1">{parts.join(" · ")}</p>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -288,6 +464,7 @@ export default function EstimatesPage() {
                 <th className="text-left text-muted font-medium text-xs uppercase tracking-wider px-5 py-3.5">Date</th>
                 <th className="text-left text-muted font-medium text-xs uppercase tracking-wider px-5 py-3.5">Customer</th>
                 <th className="text-left text-muted font-medium text-xs uppercase tracking-wider px-5 py-3.5">Product</th>
+                <th className="text-left text-muted font-medium text-xs uppercase tracking-wider px-3 py-3.5 w-[104px]">Design</th>
                 <th className="text-left text-muted font-medium text-xs uppercase tracking-wider px-5 py-3.5">Qty</th>
                 <th className="text-right text-muted font-medium text-xs uppercase tracking-wider px-5 py-3.5">Total</th>
               </tr>
@@ -319,12 +496,33 @@ export default function EstimatesPage() {
                       {est.technique && <Badge label={est.technique} />}
                     </div>
                   </td>
+                  <td className="px-3 py-3.5 align-middle">
+                    <div className="flex items-center gap-1">
+                      {est.design_images?.front ? (
+                        <DesignImage
+                          estimateId={est.estimate_id}
+                          side="front"
+                          className="w-10 h-10 rounded-lg object-cover border border-theme shrink-0 bg-input"
+                        />
+                      ) : null}
+                      {est.design_images?.back ? (
+                        <DesignImage
+                          estimateId={est.estimate_id}
+                          side="back"
+                          className="w-10 h-10 rounded-lg object-cover border border-theme shrink-0 bg-input"
+                        />
+                      ) : null}
+                      {!est.design_images?.front && !est.design_images?.back && (
+                        <span className="text-faint text-xs">—</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3.5 text-muted text-sm">
                     {est.quantity ?? "—"}
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <span className="text-theme font-semibold text-sm">
-                      {formatCurrency(est.estimate, est.currency)}
+                      {formatEstimateDisplay(est.estimate, est.currency)}
                     </span>
                   </td>
                 </tr>
