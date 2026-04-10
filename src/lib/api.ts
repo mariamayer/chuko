@@ -196,17 +196,24 @@ export interface AgentRunDetail extends AgentRun {
   result: Record<string, unknown>;
 }
 
+export interface PersonalizationRow {
+  id?: string;
+  product: string;        // "remera", "gorra", "totebag", ...
+  technique: string;      // "serigrafia", "dtf", "bordado", ...
+  variant: string;        // "standard", "negra", "plástico", "metal/vidrio"
+  placement: string;      // "1 logo", "2 logos frente+espalda", "diseño 30x40", ...
+  colors: string;         // "1", "2", "3+", "full"
+  qty_50:  number | null;
+  qty_100: number | null;
+  qty_200: number | null;
+  qty_500: number | null;
+}
+
 export interface PricingRules {
-  mode: string;                                    // "multiplier"
-  currency: string;                                // "ARS"
-  per_color_surcharge_cents: number;
-  double_sided_surcharge_cents: number;
-  logo_size_multipliers: Record<string, number>;
-  quantity_tiers: Record<string, number>;
-  product_type_multipliers: Record<string, number>;
-  product_variant_multipliers: Record<string, number>;
-  technique_multipliers: Record<string, number>;
-  technique_color_logic: Record<string, string>;
+  mode: string;                              // "additive"
+  currency: string;                          // "ARS"
+  quantity_tiers: number[];                  // [50, 100, 200, 500]
+  personalization_prices: PersonalizationRow[];
 }
 
 export interface KBEntry {
