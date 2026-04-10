@@ -196,22 +196,17 @@ export interface AgentRunDetail extends AgentRun {
   result: Record<string, unknown>;
 }
 
-export interface PersonalizationRow {
-  technique: string;
-  logo_placement: string;
-  colors: string;
-  qty_50: number;
-  qty_100: number;
-  qty_200: number;
-  qty_500: number;
-}
-
 export interface PricingRules {
-  mode: string;              // "shopify_base"
-  currency: string;          // "ARS"
-  min_quantity: number;
-  quantity_tiers: number[];  // e.g. [50, 100, 200, 500]
-  personalization_prices: PersonalizationRow[];
+  mode: string;                                    // "multiplier"
+  currency: string;                                // "ARS"
+  per_color_surcharge_cents: number;
+  double_sided_surcharge_cents: number;
+  logo_size_multipliers: Record<string, number>;
+  quantity_tiers: Record<string, number>;
+  product_type_multipliers: Record<string, number>;
+  product_variant_multipliers: Record<string, number>;
+  technique_multipliers: Record<string, number>;
+  technique_color_logic: Record<string, string>;
 }
 
 export interface KBEntry {
