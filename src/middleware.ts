@@ -27,6 +27,6 @@ export default withAuth(function middleware(request) {
 });
 
 export const config = {
-  // Protect all routes except /login and Next.js internals
-  matcher: ["/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)"],
+  // Only protect /dashboard/* routes — homepage (/) and /admin are public
+  matcher: ["/dashboard/:path*"],
 };

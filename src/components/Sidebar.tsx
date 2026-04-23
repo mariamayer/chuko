@@ -147,7 +147,7 @@ export default function Sidebar() {
           <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
         </button>
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/admin" })}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium border border-transparent hover:bg-input transition-all duration-150 text-muted"
         >
           <LogOut size={15} />
