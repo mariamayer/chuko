@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Save, Loader2, RotateCcw, Plus, Trash2, Filter } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { api, type PricingRules, type PersonalizationRow } from "@/lib/api";
@@ -164,7 +164,7 @@ export default function PricingPage() {
   const [filterProduct, setFilterProduct] = useState<string>("all");
   const tableRef = useRef<HTMLDivElement>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -175,9 +175,11 @@ export default function PricingPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [clientId]);
 
-  useEffect(() => { load(); }, [clientId]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function save() {
     if (!rules) return;
@@ -461,8 +463,10 @@ export default function PricingPage() {
 
       {/* Footer note */}
       <p className="mt-2 text-[11px] text-faint flex-shrink-0">
-        <strong>Variante:</strong> "standard" = todos los colores claros · "negra" = prendas oscuras ·
-        Dejá vacío (—) si no ofrecés ese precio para esa cantidad.
+        <strong>Variante:</strong>{" "}
+        <code className="text-muted">standard</code> = todos los colores claros ·{" "}
+        <code className="text-muted">negra</code> = prendas oscuras · Dejá vacío (—) si no ofrecés ese
+        precio para esa cantidad.
         <span className="ml-2">Moneda: {rules.currency}</span>
       </p>
     </div>
