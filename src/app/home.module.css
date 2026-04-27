@@ -1,0 +1,334 @@
+/* Landing page responsive layout — complements inline styles in page.tsx */
+
+.nav {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+  min-height: 64px;
+  height: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navCta {
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .nav {
+    flex-wrap: nowrap;
+    height: 64px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  .navLinks {
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .navLinks {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding-top: 0.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+.hero {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  /* stretch so headline uses full content width; centering via width + margin on children */
+  align-items: stretch;
+}
+
+.heroTitle {
+  width: 100%;
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  /* Beat global `h1 { font-size: 6rem !important }` in assets/styles/base.css */
+  font-size: var(--fs-hero-display) !important;
+}
+
+@media (max-width: 639px) {
+  .heroTitle {
+    font-size: 3rem !important;
+  }
+}
+
+.heroSub {
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 2.5rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  .hero {
+    /* Nav stacks into two rows on small screens; keep headline below the bar */
+    padding-top: 12rem !important;
+    padding-bottom: 3.5rem !important;
+  }
+}
+
+.heroCtas {
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  align-self: center;
+}
+
+.heroTabs {
+  flex-wrap: wrap;
+  align-self: center;
+}
+
+.heroTabsWrap {
+  width: 100%;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.heroTab {
+  box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  .heroTab {
+    flex: 1 1 50%;
+    min-width: 140px;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .heroTab:nth-child(-n + 2) {
+    border-top: none;
+  }
+
+  .heroTab:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .heroTab:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+}
+
+.services {
+  padding: 0;
+  position: relative;
+}
+
+/* Full-viewport swipe stack for service items (ScrollTrigger.observe) */
+.servicesSwipe {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate; /* predictable stacking for absolutely positioned panels */
+}
+
+.servicesSwipePanel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 1.25rem 1rem;
+  background: #c9c6ff;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .servicesSwipePanel {
+    padding: 2rem 2.5rem;
+  }
+}
+
+.servicesSwipeInner {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.serviceRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .serviceRow {
+    grid-template-columns: 160px 1fr;
+    gap: 2rem;
+  }
+}
+
+.contact {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.contactGrid {
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.contactActions {
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .contact {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
+
+  .contactGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+.footer {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.footerTop {
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+.footerLinks {
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.footerBottom {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.footerLegal {
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .footerLinks {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .footer {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  .footerTop {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+
+  .footerBottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+  }
+}
+
+.pageRoot {
+  overflow-x: clip;
+  /* Fluid type: rem base + vw so small viewports scale down instead of hitting a large clamp() floor */
+  --fs-nav-logo: clamp(1rem, 0.88rem + 0.55vw, 1.35rem);
+  --fs-nav-link: clamp(0.72rem, 0.66rem + 0.28vw, 0.9rem);
+  --fs-nav-cta: clamp(0.72rem, 0.68rem + 0.22vw, 0.85rem);
+  --fs-hero-display: clamp(2rem, 1.15rem + 4.2vw, 6.75rem);
+  --fs-hero-sub: clamp(0.9rem, 0.82rem + 0.35vw, 1.125rem);
+  --fs-hero-cta: clamp(0.78rem, 0.72rem + 0.28vw, 0.9rem);
+  --fs-hero-tab: clamp(0.65rem, 0.58rem + 0.3vw, 0.8rem);
+  --fs-service-num: clamp(2.75rem, 1.5rem + 8vw, 7rem);
+  --fs-service-tag: clamp(0.62rem, 0.56rem + 0.22vw, 0.72rem);
+  --fs-service-title: clamp(1.35rem, 1rem + 1.85vw, 2.85rem);
+  --fs-service-body: clamp(0.88rem, 0.82rem + 0.28vw, 1rem);
+  --fs-link-sm: clamp(0.75rem, 0.7rem + 0.22vw, 0.875rem);
+  --fs-contact-title: clamp(1.65rem, 1.1rem + 2.4vw, 3.5rem);
+  --fs-contact-body: clamp(0.88rem, 0.82rem + 0.28vw, 1rem);
+  --fs-contact-btn: clamp(0.78rem, 0.72rem + 0.25vw, 0.9rem);
+  --fs-footer-brand: clamp(1.05rem, 0.95rem + 0.45vw, 1.35rem);
+  --fs-footer-text: clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem);
+  --fs-footer-heading: clamp(0.68rem, 0.64rem + 0.2vw, 0.8rem);
+  --fs-footer-link: clamp(0.75rem, 0.7rem + 0.22vw, 0.875rem);
+  --fs-footer-legal: clamp(0.68rem, 0.64rem + 0.18vw, 0.8rem);
+}
+
+/* Phones: title scale at ~50% of previous mobile caps */
+@media (max-width: 639px) {
+  .pageRoot {
+    --fs-hero-display: clamp(0.725rem, 0.36rem + 1.75vw, 1.1rem);
+    --fs-contact-title: clamp(0.8125rem, 0.425rem + 1.1vw, 1.1rem);
+    --fs-service-num: clamp(1rem, 0.55rem + 3.25vw, 2.25rem);
+    --fs-service-title: clamp(0.8125rem, 0.44rem + 0.7vw, 1.175rem);
+  }
+}
+
+/* Tablet: bridge between phone and desktop scale */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .pageRoot {
+    --fs-hero-display: clamp(2rem, 0.95rem + 3.2vw, 4.25rem);
+    --fs-contact-title: clamp(1.65rem, 1rem + 2.2vw, 3rem);
+  }
+}
+
+/* ── Text reveal masks (overflow hidden + inner slide; GSAP yPercent) ── */
+.revealWordMask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  margin-right: 0.22em;
+}
+
+.revealWordMask:last-child {
+  margin-right: 0;
+}
+
+.revealWordInner {
+  display: inline-block;
+  will-change: transform;
+}
+
+.revealLineHost {
+  overflow: hidden;
+}
+
