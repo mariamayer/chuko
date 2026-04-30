@@ -298,6 +298,9 @@ export const api = {
   getEstimate: (estimateId: string) =>
     get<{ ok: boolean; estimate: EstimateDetail }>(`/api/estimates/${estimateId}`),
 
+  deleteEstimate: (estimateId: string) =>
+    del<{ ok: boolean; deleted: string }>(`/api/estimates/${estimateId}`),
+
   // Pricing Rules
   getPricingRules: (clientId = "default") =>
     get<{ ok: boolean; rules: PricingRules }>("/api/pricing-rules", { client_id: clientId }),

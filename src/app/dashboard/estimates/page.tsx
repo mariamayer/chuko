@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { RefreshCw, Search, X } from "lucide-react";
+import { RefreshCw, Search, Trash2, X } from "lucide-react";
 import {
   api,
   estimateDesignImageUrl,
@@ -111,9 +111,19 @@ function DesignImage({
   );
 }
 
-function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: () => void }) {
+function EstimateDrawer({
+  estimateId,
+  onClose,
+  onDelete,
+}: {
+  estimateId: string;
+  onClose: () => void;
+  onDelete: (id: string) => void;
+}) {
   const [detail, setDetail] = useState<EstimateDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.getEstimate(estimateId)
@@ -121,6 +131,18 @@ function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: 
       .catch(() => {/* ignore */})
       .finally(() => setLoading(false));
   }, [estimateId]);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await api.deleteEstimate(estimateId);
+      onDelete(estimateId);
+      onClose();
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   const bd = detail?.breakdown;
 
@@ -137,12 +159,41 @@ function EstimateDrawer({ estimateId, onClose }: { estimateId: string; onClose: 
             <p className="text-faint text-xs font-mono">{estimateId}</p>
             <h2 className="text-theme font-bold mt-0.5">Estimate Detail</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-muted hover:text-theme transition-colors"
-          >
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-1">
+            {confirmDelete ? (
+              <>
+                <span className="text-xs text-muted mr-2">Delete this estimate?</span>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={{ backgroundColor: "var(--red-bg)", color: "var(--red)" }}
+                >
+                  {deleting ? "Deleting…" : "Yes, delete"}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-muted hover:text-theme transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="p-1.5 rounded-lg text-muted hover:text-theme transition-colors"
+                title="Delete estimate"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-muted hover:text-theme transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {loading && <p className="text-faint text-sm p-6">Loading…</p>}
@@ -374,6 +425,10 @@ export default function EstimatesPage() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  function handleDeletedEstimate(deletedId: string) {
+    setEstimates((prev) => prev.filter((e) => e.estimate_id !== deletedId));
+  }
+
   async function load() {
     setLoading(true);
     setError("");
@@ -540,7 +595,11 @@ export default function EstimatesPage() {
       )}
 
       {selectedId && (
-        <EstimateDrawer estimateId={selectedId} onClose={() => setSelectedId(null)} />
+        <EstimateDrawer
+          estimateId={selectedId}
+          onClose={() => setSelectedId(null)}
+          onDelete={handleDeletedEstimate}
+        />
       )}
     </div>
   );
