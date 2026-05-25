@@ -314,10 +314,19 @@ export const api = {
     get<{ ok: boolean; run: AgentRunDetail }>(`/api/agent-runs/${runId}`),
 
   // Estimates
-  getEstimates: (clientId?: string, limit = 100) =>
-    get<{ ok: boolean; count: number; estimates: EstimateSummary[] }>("/api/estimates", {
+  getEstimates: (clientId?: string, limit = 25, offset = 0) =>
+    get<{
+      ok: boolean;
+      count: number;
+      estimates: EstimateSummary[];
+      limit: number;
+      offset: number;
+      next_offset: number | null;
+      has_more: boolean;
+    }>("/api/estimates", {
       ...(clientId ? { client_id: clientId } : {}),
       limit,
+      offset,
     }),
 
   getEstimate: (estimateId: string) =>

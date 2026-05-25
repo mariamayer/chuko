@@ -11,6 +11,8 @@ import {
   type EstimateBreakdown,
 } from "@/lib/api";
 
+const ESTIMATES_PAGE_SIZE = 25;
+
 function formatDate(iso: string) {
   if (!iso) return "—";
   try {
@@ -425,6 +427,8 @@ export default function EstimatesPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   function handleDeletedEstimate(deletedId: string) {
     setEstimates((prev) => prev.filter((e) => e.estimate_id !== deletedId));
@@ -435,12 +439,35 @@ export default function EstimatesPage() {
     setError("");
     try {
       // admin sees all, client sees only their own
-      const res = await api.getEstimates(role === "client" ? clientId : undefined);
+      const res = await api.getEstimates(role === "client" ? clientId : undefined, ESTIMATES_PAGE_SIZE, 0);
       setEstimates(res.estimates);
+      setNextOffset(res.next_offset);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    if (nextOffset == null) return;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const res = await api.getEstimates(
+        role === "client" ? clientId : undefined,
+        ESTIMATES_PAGE_SIZE,
+        nextOffset,
+      );
+      setEstimates((prev) => {
+        const seen = new Set(prev.map((estimate) => estimate.estimate_id));
+        return [...prev, ...res.estimates.filter((estimate) => !seen.has(estimate.estimate_id))];
+      });
+      setNextOffset(res.next_offset);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load more");
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -589,10 +616,23 @@ export default function EstimatesPage() {
       )}
 
       {!loading && (
-        <p className="text-faint text-xs mt-3">
-          {filtered.length} estimate{filtered.length !== 1 ? "s" : ""}
-          {search && estimates.length !== filtered.length ? ` of ${estimates.length}` : ""}
-        </p>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <p className="text-faint text-xs">
+            {filtered.length} loaded estimate{filtered.length !== 1 ? "s" : ""}
+            {search && estimates.length !== filtered.length ? ` of ${estimates.length}` : ""}
+          </p>
+          {nextOffset != null && !search && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="px-4 py-2 rounded-xl bg-input border border-theme text-muted text-sm transition-all duration-150 disabled:opacity-60"
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-bd)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "")}
+            >
+              {loadingMore ? "Loading…" : "Load more"}
+            </button>
+          )}
+        </div>
       )}
 
       {selectedId && (
