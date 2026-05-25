@@ -11,7 +11,7 @@ import {
   type EstimateBreakdown,
 } from "@/lib/api";
 
-const ESTIMATES_PAGE_SIZE = 25;
+const ESTIMATES_PAGE_SIZE = 10;
 
 function formatDate(iso: string) {
   if (!iso) return "—";
