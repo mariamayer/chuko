@@ -121,6 +121,7 @@ export interface EstimateSummary {
   estimate: number | string;
   currency: string;
   quantity: number | null;
+  product_title?: string;
   product_type?: string;
   product_variant?: string;
   technique?: string;
@@ -174,6 +175,7 @@ export interface EstimateDetail {
   currency: string;
   /** When true, totals may be labels (e.g. “consultar”) instead of numbers. */
   consultar?: boolean;
+  product_title?: string;
   breakdown: EstimateBreakdown;
   meta: Record<string, unknown>;
   design_images?: EstimateDesignImages;
@@ -183,6 +185,29 @@ export interface EstimateDetail {
     back?: { logo_size?: string; color_count?: number; notes?: string };
   };
 }
+
+export interface BriefSummary {
+  brief_id: string;
+  created_at: string;
+  client_id: string;
+  nombre: string;
+  apellido: string;
+  empresa: string;
+  puesto: string;
+  email: string;
+  tel: string;
+  preferencia_contacto: string;
+  tipo: string;
+  logo: string;
+  contexto: string;
+  source_url?: string;
+}
+
+export type BriefDetail = BriefSummary & {
+  como?: string;
+  cantidad?: string;
+  fecha?: string;
+};
 
 export interface AgentRun {
   run_id: string;
@@ -300,6 +325,19 @@ export const api = {
 
   deleteEstimate: (estimateId: string) =>
     del<{ ok: boolean; deleted: string }>(`/api/estimates/${estimateId}`),
+
+  // Corporate briefs
+  getBriefs: (clientId?: string, limit = 100) =>
+    get<{ ok: boolean; count: number; briefs: BriefSummary[] }>("/api/briefs", {
+      ...(clientId ? { client_id: clientId } : {}),
+      limit,
+    }),
+
+  getBrief: (briefId: string) =>
+    get<{ ok: boolean; brief: BriefDetail }>(`/api/briefs/${briefId}`),
+
+  deleteBrief: (briefId: string) =>
+    del<{ ok: boolean; deleted: string }>(`/api/briefs/${briefId}`),
 
   // Pricing Rules
   getPricingRules: (clientId = "default") =>

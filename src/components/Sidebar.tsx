@@ -12,6 +12,7 @@ import {
   BookOpen,
   Tag,
   FileText,
+  ClipboardList,
   LogOut,
   Sun,
   Moon,
@@ -61,6 +62,12 @@ export default function Sidebar() {
       href: "/dashboard/estimates",
       label: "Estimates",
       icon: FileText,
+      show: role === "admin" || enabledModules.includes("price_estimator"),
+    },
+    {
+      href: "/dashboard/briefs",
+      label: "Briefs",
+      icon: ClipboardList,
       show: role === "admin" || enabledModules.includes("price_estimator"),
     },
     {

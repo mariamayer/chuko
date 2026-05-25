@@ -50,7 +50,7 @@ function hasLegacyPricedBreakdown(bd: EstimateBreakdown | undefined) {
   if (!bd) return false;
   return (
     typeof bd.unit_price_cents === "number" ||
-    typeof bd.base_price_per_unit_cents === "number"
+    (typeof bd.base_price_per_unit_cents === "number" && bd.base_price_per_unit_cents > 0)
   );
 }
 
@@ -287,7 +287,7 @@ function EstimateDrawer({
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Product</p>
                 <div className="bg-input rounded-xl p-4">
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {bd.product_type && <Badge label={bd.product_type} />}
+                    {(detail.product_title || bd.product_type) && <Badge label={detail.product_title || bd.product_type || ""} />}
                     {bd.product_variant && <Badge label={bd.product_variant} />}
                     {bd.technique && <Badge label={bd.technique} />}
                     {bd.logo_size && <Badge label={`logo: ${bd.logo_size}`} />}
@@ -335,8 +335,8 @@ function EstimateDrawer({
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Request details</p>
                 <div className="bg-input rounded-xl p-4 space-y-4">
                   <div className="flex flex-wrap gap-1.5">
-                    {Boolean((bd.product_type || bd.product || "").toString().trim()) && (
-                      <Badge label={(bd.product_type || bd.product || "").toString().trim()} />
+                    {Boolean((detail.product_title || bd.product_type || bd.product || "").toString().trim()) && (
+                      <Badge label={(detail.product_title || bd.product_type || bd.product || "").toString().trim()} />
                     )}
                     {(bd.product_variant || bd.variant) != null &&
                       String(bd.product_variant ?? bd.variant).trim() !== "" && (
@@ -384,8 +384,9 @@ function EstimateDrawer({
                   {(() => {
                     const m = detail.meta as { product_id?: string | number; variant_id?: string | number };
                     if (m.product_id == null && m.variant_id == null) return null;
+                    const productName = detail.product_title?.trim();
                     const parts = [
-                      m.product_id != null ? `product ${m.product_id}` : "",
+                      productName ? `product ${productName}` : m.product_id != null ? `product ${m.product_id}` : "",
                       m.variant_id != null ? `variant ${m.variant_id}` : "",
                     ].filter(Boolean);
                     return (
