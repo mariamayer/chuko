@@ -147,6 +147,7 @@ function EstimateDrawer({
   }
 
   const bd = detail?.breakdown;
+  const productTitle = detail?.product_title?.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex" onClick={onClose}>
@@ -288,8 +289,14 @@ function EstimateDrawer({
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Product</p>
                 <div className="bg-input rounded-xl p-4">
+                  {productTitle && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-faint">Product title</p>
+                      <h3 className="text-theme text-lg font-bold mt-1 leading-tight">{productTitle}</h3>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {(detail.product_title || bd.product_type) && <Badge label={detail.product_title || bd.product_type || ""} />}
+                    {bd.product_type && bd.product_type !== productTitle && <Badge label={`matched: ${bd.product_type}`} />}
                     {bd.product_variant && <Badge label={bd.product_variant} />}
                     {bd.technique && <Badge label={bd.technique} />}
                     {bd.logo_size && <Badge label={`logo: ${bd.logo_size}`} />}
@@ -336,9 +343,16 @@ function EstimateDrawer({
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Request details</p>
                 <div className="bg-input rounded-xl p-4 space-y-4">
+                  {productTitle && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-faint">Product title</p>
+                      <h3 className="text-theme text-lg font-bold mt-1 leading-tight">{productTitle}</h3>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-1.5">
-                    {Boolean((detail.product_title || bd.product_type || bd.product || "").toString().trim()) && (
-                      <Badge label={(detail.product_title || bd.product_type || bd.product || "").toString().trim()} />
+                    {Boolean((bd.product_type || bd.product || "").toString().trim()) &&
+                      (bd.product_type || bd.product) !== productTitle && (
+                      <Badge label={`matched: ${(bd.product_type || bd.product || "").toString().trim()}`} />
                     )}
                     {(bd.product_variant || bd.variant) != null &&
                       String(bd.product_variant ?? bd.variant).trim() !== "" && (
@@ -573,10 +587,20 @@ export default function EstimatesPage() {
                     )}
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {est.product_type && <Badge label={est.product_type} />}
-                      {est.product_variant && <Badge label={est.product_variant} />}
-                      {est.technique && <Badge label={est.technique} />}
+                    <div className="flex flex-col gap-1">
+                      {(est.product_title || est.product_type) && (
+                        <p className="text-theme text-sm font-medium leading-tight">
+                          {est.product_title || est.product_type}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {est.matched_product &&
+                          est.matched_product !== (est.product_title || est.product_type) && (
+                            <Badge label={`matched: ${est.matched_product}`} />
+                          )}
+                        {est.product_variant && <Badge label={est.product_variant} />}
+                        {est.technique && <Badge label={est.technique} />}
+                      </div>
                     </div>
                   </td>
                   <td className="px-3 py-3.5 align-middle">

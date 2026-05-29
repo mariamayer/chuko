@@ -123,6 +123,7 @@ export interface EstimateSummary {
   quantity: number | null;
   product_title?: string;
   product_type?: string;
+  matched_product?: string;
   product_variant?: string;
   technique?: string;
   logo_size?: string;
